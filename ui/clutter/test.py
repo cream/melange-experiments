@@ -1,6 +1,6 @@
 import sys
 import math
-from gi.repository import Gtk as gtk, Clutter as clutter, GtkClutter as gtkclutter, WebKit as webkit, JSCore as jscore, Gdk as gdk, GObject as gobject
+from gi.repository import Gtk as gtk, Cogl as cogl, Clutter as clutter, GtkClutter as gtkclutter, WebKit as webkit, JSCore as jscore, Gdk as gdk, GObject as gobject
 
 gtkclutter.init(sys.argv)
 
@@ -10,6 +10,59 @@ FRAMERATE = 30.0
 
 CURVE_LINEAR = lambda x: x
 CURVE_SINE = lambda x: math.sin(math.pi / 2 * x)
+
+def rounded_rectangle(cr, x, y, w, h, r=20):
+    # This is just one of the samples from 
+    # http://www.cairographics.org/cookbook/roundedrectangles/
+    #   A****BQ
+    #  H      C
+    #  *      *
+    #  G      D
+    #   F****E
+
+    cr.move_to(x+r,y)                      # Move to A
+    cr.line_to(x+w-r,y)                    # Straight line to B
+    cr.curve_to(x+w,y,x+w,y,x+w,y+r)       # Curve to C, Control points are both at Q
+    cr.line_to(x+w,y+h-r)                  # Move to D
+    cr.curve_to(x+w,y+h,x+w,y+h,x+w-r,y+h) # Curve to E
+    cr.line_to(x+r,y+h)                    # Line to F
+    cr.curve_to(x,y+h,x,y+h,x,y+h-r)       # Curve to G
+    cr.line_to(x,y+r)                      # Line to H
+    cr.curve_to(x,y,x,y,x+r,y)             # Curve to A
+
+
+class WidgetBackground(clutter.CairoTexture):
+    """Base actor for a rounded retangle."""
+ 
+    def __init__(self, width, height, arc):
+
+        clutter.CairoTexture.__init__(self)
+        self.set_surface_size(width, height)
+        self.connect('draw', self.draw_cb)
+        self.create()
+        
+        self.invalidate()
+        
+        
+    def draw_cb(self, texture, ctx):
+    
+        width, height = self.get_surface_size()
+    
+        ctx.set_source_rgba(255, 255, 255, .5)
+        rounded_rectangle(ctx, 2, 2, width - 4, height - 4, 10)
+        ctx.stroke()
+
+        rounded_rectangle(ctx, 3, 3, width - 6, height - 6, 10)
+        ctx.clip()
+        
+        ctx.set_source_rgba(255, 255, 255, .3)
+        ctx.set_line_width(1)
+        
+        for x in xrange(-width-4, width-4, 5):
+            ctx.move_to(x, height - 2)
+            ctx.line_to(x+width-4, 2)
+        ctx.stroke()
+        
 
 class Timeline(gobject.GObject):
 
@@ -115,20 +168,13 @@ class Test(object):
             return False
             
         gobject.timeout_add(1000, show)
-
-        self.view.connect('status-bar-text-changed', self.call_cb)
+        
+        rect = WidgetBackground(170, 170, 10)
+        rect.set_position(203, 222)
+        self.stage.add_actor(rect)
+        rect.show()
 
         self.window.show_all()
-        
-
-    def call_cb(self, view, text):
-    
-        if text == 'hermes-call':
-            hermes = self.view.get_dom_document().get_element_by_id('hermes')
-            print gobject.signal_list_names(hermes)
-            print "JS-PY:", hermes.get_inner_html()
-            
-            self.view.execute_script('py_to_js("BLUBB");')
             
 
 Test()
