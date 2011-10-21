@@ -1,3 +1,4 @@
+import os
 import sys
 import math
 from gi.repository import Gtk as gtk, Cogl as cogl, Clutter as clutter, GtkClutter as gtkclutter, WebKit as webkit, JSCore as jscore, Gdk as gdk, GObject as gobject
@@ -133,7 +134,9 @@ class Test(object):
 
         self.view = webkit.WebView()
         self.view.set_transparent(True)
-        self.view.open('file:///home/stein/Labs/Experiments/melange-clutter/test.html')
+
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.html')
+        self.view.open('file://{0}'.format(path))
 
         self.widget = gtkclutter.Actor.new_with_contents(self.view)
         
