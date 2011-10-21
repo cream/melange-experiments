@@ -13,7 +13,7 @@ CURVE_LINEAR = lambda x: x
 CURVE_SINE = lambda x: math.sin(math.pi / 2 * x)
 
 def rounded_rectangle(cr, x, y, w, h, r=20):
-    # This is just one of the samples from 
+    # This is just one of the samples from
     # http://www.cairographics.org/cookbook/roundedrectangles/
     #   A****BQ
     #  H      C
@@ -34,36 +34,36 @@ def rounded_rectangle(cr, x, y, w, h, r=20):
 
 class WidgetBackground(clutter.CairoTexture):
     """Base actor for a rounded retangle."""
- 
+
     def __init__(self, width, height, arc):
 
         clutter.CairoTexture.__init__(self)
         self.set_surface_size(width, height)
         self.connect('draw', self.draw_cb)
         self.create()
-        
+
         self.invalidate()
-        
-        
+
+
     def draw_cb(self, texture, ctx):
-    
+
         width, height = self.get_surface_size()
-    
+
         ctx.set_source_rgba(255, 255, 255, .5)
         rounded_rectangle(ctx, 2, 2, width - 4, height - 4, 10)
         ctx.stroke()
 
         rounded_rectangle(ctx, 3, 3, width - 6, height - 6, 10)
         ctx.clip()
-        
+
         ctx.set_source_rgba(255, 255, 255, .3)
         ctx.set_line_width(1)
-        
+
         for x in xrange(-width-4, width-4, 5):
             ctx.move_to(x, height - 2)
             ctx.line_to(x+width-4, 2)
         ctx.stroke()
-        
+
 
 class Timeline(gobject.GObject):
 
@@ -100,7 +100,7 @@ class Timeline(gobject.GObject):
 
 
     def update(self):
-        
+
         if self._stopped:
             self.emit('completed')
             return False
@@ -139,15 +139,15 @@ class Test(object):
         self.view.open('file://{0}'.format(path))
 
         self.widget = gtkclutter.Actor.new_with_contents(self.view)
-        
+
         def show():
             self.stage.add_actor(self.widget)
             self.widget.set_position(200, 200)
             self.widget.set_property('opacity', 0)
             self.widget.show_all()
-            
+
             self.widget.set_property('scale-gravity', clutter.Gravity.CENTER)
-            
+
             def update_cb(t, s):
                 self.widget.set_property('opacity', min(255, int(round(255*s))))
                 #self.widget.set_property('scale-x', s)
@@ -155,9 +155,9 @@ class Test(object):
 
             timeline = Timeline(200, CURVE_SINE)
             timeline.connect('update', update_cb)
-            
+
             timeline.run()
-            
+
             """
             animation.set_key(self.widget, "scale-x", clutter.AnimationMode.EASE_OUT_BACK, 0.0, 0.0)
             animation.set_key(self.widget, "scale-x", clutter.AnimationMode.EASE_OUT_BACK, 1.0, 1.0)
@@ -169,16 +169,16 @@ class Test(object):
             """
 
             return False
-            
+
         gobject.timeout_add(1000, show)
-        
+
         rect = WidgetBackground(170, 170, 10)
         rect.set_position(203, 222)
         self.stage.add_actor(rect)
         rect.show()
 
         self.window.show_all()
-            
+
 
 Test()
 gtk.main()
