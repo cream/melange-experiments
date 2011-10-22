@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Web Socket Example</title>
+    <meta charset="UTF-8">
+    <script type="text/javascript">
+        var ws = new WebSocket("ws://127.0.0.1:8092");
+        ws.onopen = function() {
+            alert('connected');
+            ws.send("CONNECTED");
+        };
+        ws.onmessage = function (evt) {
+            alert(evt);
+        };
+        ws.onclose = function() { alert('Closed') };
+
+        function test(){
+            ws.send('foo');
+            alert('sent');
+        }
+
+        function close1(){
+            alert('closing');
+            ws.close();
+        }
+
+        function info(){
+            alert(ws.readyState);
+            alert(ws.bufferedAmount);
+
+        }
+</script>
+  </head>
+    <body>
+      <button onclick='test()'>POKE!</button>
+      <button onclick='close1()'>Close</button>
+      <button onclick='info()'>Info</button>
+    </body>
+</html>
