@@ -4,29 +4,26 @@
     <title>Web Socket Example</title>
     <meta charset="UTF-8">
     <script type="text/javascript">
-        var ws = new WebSocket("ws://127.0.0.1:8092");
+        var ws = new WebSocket("ws://127.0.0.1:8086");
         ws.onopen = function() {
             alert('connected');
             ws.send("CONNECTED");
         };
-        ws.onmessage = function (evt) {
-            alert(evt);
+        ws.onmessage = function (e) {
+            alert(e.data);
         };
         ws.onclose = function() { alert('Closed') };
 
         function test(){
-            ws.send('foo');
-            alert('sent');
+            ws.send('DDDDDDDAAAAAAAAAAAAAAATTTTTTTTTTAAAAAAAAAA');
         }
 
         function close1(){
-            alert('closing');
             ws.close();
         }
 
         function info(){
             alert(ws.readyState);
-            alert(ws.bufferedAmount);
 
         }
 </script>

@@ -6,19 +6,24 @@ import hashlib
 import threading
 
 import time
+import struct
 
 
-HANDSHAKE = '''HTTP/1.1 101 Switching Protocols
-Upgrade: WebSocket
-Connection: Upgrade
-Sec-WebSocket-Origin: {origin}
+HANDSHAKE = '''HTTP/1.1 101 Switching Protocols\r
+Upgrade: websocket\r
+Connection: Upgrade\r
 Sec-WebSocket-Accept: {key}
-Sec-WebSocket-Location: ws://{host}:{port}/
-Sec-WebSocket-Protocol: sample
-Sec-Websocket-Version: 8'''
+\r\n'''
 
 
 MAGIC_KEY = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+
+
+def generate_accept_token(key):
+
+    key = key.strip() + MAGIC_KEY
+    key_hashed = hashlib.sha1(key).digest()
+    return base64.b64encode(key_hashed)
 
 def split_handshake_request(request):
 
@@ -40,55 +45,58 @@ class WebSocket(object):
 
         self.handshaken = False
 
+        self.data = ''
 
-    def handle(self, client):
+        self.client, adress = self.socket.accept()
 
-        if not self.handshaken:
-            data = client.recv(255)
-            data = data.decode('utf-8', 'ignore')
-            print data
-            self.do_handshake(client, data)
-        else:
-            print client.recv(10)
-            print msg
-            self.do_stuff(client, msg)
+        self.handle()
 
 
+    def handle(self):
 
-    def do_handshake(self, client, request):
+        while True:
+            if not self.handshaken:
+                data = self.client.recv(255)
+                data = data.decode('utf-8', 'ignore')
+                self.do_handshake(data)
+            else:
+                msg = self.client.recv(4096)
+                if msg.startswith('\x88\x80'): # Close frame
+                    self.close(msg)
+                else:
+                    self.echo(msg)
+
+
+
+    def do_handshake(self, request):
 
         request = split_handshake_request(request)
-        key = hashlib.sha1(request['Sec-WebSocket-Key'] + MAGIC_KEY).digest()
-        key = base64.encodestring(key).strip()
+        key = generate_accept_token(request['Sec-WebSocket-Key'])
         origin = request['Sec-WebSocket-Origin'].strip()
 
         handshake = HANDSHAKE.format(key=key, origin=origin, host=self.host, port=self.port)
 
         self.handshaken = True
-        print handshake
 
-        client.send(handshake)
-
-
-    def do_stuff(self, msg):
-
-        pass
+        self.client.send(handshake)
 
 
-    def loop(self):
+    def close(self, msg):
 
-        try:
-            while True:
-                client, adress = self.socket.accept()
-                self.handle(client)
-                threading.Thread(target=self.handle, args=(t,)).start()
-        except KeyboardInterrupt:
-            self.socket.close()
+        frame = struct.pack('B', 0x80 | 0x8)
+        frame += struct.pack('B', 0)
+
+        self.client.send(frame)
+
+        self.socket.close()
 
 
-sock = WebSocket('127.0.0.1', 8092)
 
-try:
-    sock.loop()
-except Exception:
-    sock.socket.close()
+    def echo(self,  msg):
+
+        self.client.send('\x00' + 'Test'.encode('utf-8') + '\xff')
+
+
+
+if __name__ == '__main__':
+    sock = WebSocket('127.0.0.1', 8086)
