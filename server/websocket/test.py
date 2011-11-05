@@ -9,6 +9,8 @@ import hashlib
 from select import select
 from threading import Thread
 
+from utils import decode, encode
+
 
 HANDSHAKE = '''HTTP/1.1 101 Switching Protocols\r
 Upgrade: websocket\r
@@ -17,6 +19,8 @@ Sec-WebSocket-Accept: {key}\r\n\r\n'''
 
 
 MAGIC_KEY = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+
+OP_CLOSE = 8
 
 
 def generate_accept_token(key):
@@ -41,16 +45,27 @@ class WebSocket(object):
         self.port = port
 
         self.handshaken = False
+        self.closed = False
         self.data = ''
 
 
-    def feed(self, data):
+    def read(self):
 
         if not self.handshaken:
+            data = self.client.recv(1024)
             self.do_handshake(data)
         else:
-            self.data += data
-            print self.data.decode('utf-8', 'ignore')
+            self.data += self.client.recv(1024)
+
+            res = decode(self.data)
+            if res['remaining'] == 0:
+                self.data = ''
+
+            if res['data']:
+                self.onmessage(res['data'])
+
+            if res['opcode'] == OP_CLOSE:
+                self.close()
 
 
     def onmessage(self, msg):
@@ -67,8 +82,21 @@ class WebSocket(object):
         handshake = HANDSHAKE.format(key=key, origin=origin, host=self.host, port=self.port)
 
         self.handshaken = True
-
         self.client.send(handshake)
+
+
+
+    def close(self):
+
+        self.send_close()
+        self.closed = True
+
+
+    def send_close(self):
+
+        buf = encode('', opcode=0x80)
+        self.client.send(buf)
+
 
 
 
@@ -100,12 +128,13 @@ class WebSocketServer(object):
                     self.connections[fileno] = WebSocket(client, self.host, self.port)
                 else:
                     client = self.connections[ready].client
-                    data = client.recv(1024)
-                    fileno = client.fileno()
-                    if data:
-                        self.connections[fileno].feed(data)
+                    if self.connections[ready].closed:
+                        print 'Closing socket...'
+                        self.listeners.remove(client.fileno())
+                        client.close()
                     else:
-                        pass
+                        fileno = client.fileno()
+                        self.connections[fileno].read()
 
             for failed in xlist:
                 if failed == self.socket:
@@ -113,7 +142,6 @@ class WebSocketServer(object):
                     for fileno, conn in self.connections:
                         conn.close()
                     self.running = False
-
 
 
 
