@@ -4,7 +4,7 @@
     <title>Web Socket Example</title>
     <meta charset="UTF-8">
     <script type="text/javascript">
-        var ws = new WebSocket("ws://127.0.0.1:8086");
+        var ws = new WebSocket("ws://127.0.0.1:8080");
         ws.onopen = function() {
             alert('connected');
             ws.send("CONNECTED");
