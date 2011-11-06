@@ -5,7 +5,7 @@ from gi.repository import Cogl as cogl, Clutter as clutter, GtkClutter as gtkclu
 gtkclutter.init(sys.argv)
 from gi.repository import Gtk as gtk
 
-BACKGROUND_IMAGE = '/home/stein/Bilder/Bearbeitet/Sommerspaziergang.jpg'
+BACKGROUND_IMAGE = 'Sommerspaziergang.jpg'
 
 FRAMERATE = 30.0
 
@@ -161,8 +161,6 @@ class Test(object):
         self.wrapper = gtkclutter.Actor.new_with_contents(self.view)
         self.widget.add_actor(self.wrapper)
         self.wrapper.show_all()
-        
-        
         
         self.background.set_reactive(True)
         self.background.connect('button-press-event', foo)
