@@ -1,0 +1,30 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Web Socket Example</title>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="api.js"></script>
+    <script type="text/javascript">
+
+        widget = new Widget('weather');
+
+        function test(){
+            widget.get_temperature({'location': document.form.location.value}, function(data){
+                document.getElementById('location').innerHTML = data.location;
+                document.getElementById('temp').innerHTML = data.temperature;
+            });
+        }
+
+</script>
+  </head>
+    <body>
+        <form name="form">
+            <pre>
+                Location: <input type="text" size="40" name="location">
+            </pre>
+        </form>
+        <button onclick="test()">Submit</button>
+        <div>
+            The temperature in <span id="location"></span> is <span id="temp"></span>°C
+        </div>
+    </body>
+</html>
