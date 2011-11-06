@@ -148,15 +148,16 @@ class Test(object):
         self.widget.set_property('opacity', 255)
         self.stage.add_actor(self.widget)
         self.widget.show_all()
-
-        def foo(*args):
-            print(args)
+        
+        self.widget.set_reactive(True)
+        self.widget.connect('enter-event', self.widget_enter_event_cb)
+        self.widget.connect('leave-event', self.widget_leave_event_cb)
 
         self.widget.set_position(200, 200)
 
         self.background = WidgetBackground(160, 160, 10)
         self.background.set_position(-5, -5)
-        self.background.set_property('opacity', 255)
+        self.background.set_property('opacity', 0)
         self.widget.add_actor(self.background)
         self.background.show()
 
@@ -164,12 +165,17 @@ class Test(object):
         self.widget.add_actor(self.wrapper)
         self.wrapper.show_all()
 
-        self.background.set_reactive(True)
-        self.background.connect('button-press-event', foo)
-
         self.wrapper.connect('allocation-changed', lambda actor, box, flags: self.background.set_size(box.get_width() + 10, box.get_height() + 10))
 
         self.window.show_all()
+        
+      
+    def widget_enter_event_cb(self, actor, event):
+        self.background.animatev(clutter.AnimationMode.EASE_IN_QUAD, 100, ['opacity'], [80])
+        
+      
+    def widget_leave_event_cb(self, actor, event):
+        self.background.animatev(clutter.AnimationMode.EASE_IN_QUAD, 300, ['opacity'], [0])
 
 
 Test()
