@@ -1,11 +1,11 @@
 import os
 import sys
 import math
-from gi.repository import Gtk as gtk, Cogl as cogl, Clutter as clutter, GtkClutter as gtkclutter, WebKit as webkit, JSCore as jscore, Gdk as gdk, GObject as gobject
-
+from gi.repository import Cogl as cogl, Clutter as clutter, GtkClutter as gtkclutter, WebKit as webkit, JSCore as jscore, Gdk as gdk, GObject as gobject
 gtkclutter.init(sys.argv)
+from gi.repository import Gtk as gtk
 
-BACKGROUND_IMAGE = '/home/stein/Bilder/Hintergrundbilder/cream.png'
+BACKGROUND_IMAGE = '/home/stein/Bilder/Bearbeitet/Sommerspaziergang.jpg'
 
 FRAMERATE = 30.0
 
@@ -48,7 +48,7 @@ class WidgetBackground(clutter.CairoTexture):
     def draw_cb(self, texture, ctx):
 
         width, height = self.get_surface_size()
-
+        
         ctx.set_source_rgba(255, 255, 255, .5)
         rounded_rectangle(ctx, 2, 2, width - 4, height - 4, 10)
         ctx.stroke()
@@ -59,11 +59,11 @@ class WidgetBackground(clutter.CairoTexture):
         ctx.set_source_rgba(255, 255, 255, .3)
         ctx.set_line_width(1)
 
-        for x in xrange(-width-4, width-4, 5):
+        for x in range(-width-4, width-4, 5):
             ctx.move_to(x, height - 2)
             ctx.line_to(x+width-4, 2)
         ctx.stroke()
-
+        
 
 class Timeline(gobject.GObject):
 
@@ -134,48 +134,40 @@ class Test(object):
 
         self.view = webkit.WebView()
         self.view.set_transparent(True)
+        
+        settings = self.view.get_settings()
+        settings.set_property('enable-plugins', False)
+        self.view.set_settings(settings)
 
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.html')
         self.view.open('file://{0}'.format(path))
+            
+        self.widget = clutter.Group()
+        self.widget.set_property('opacity', 255)
+        self.stage.add_actor(self.widget)
+        self.widget.show_all()
+        
+        def foo(*args):
+            print(args)
+        
+        self.widget.set_position(200, 200)
 
-        self.widget = gtkclutter.Actor.new_with_contents(self.view)
-
-        def show():
-            self.stage.add_actor(self.widget)
-            self.widget.set_position(200, 200)
-            self.widget.set_property('opacity', 0)
-            self.widget.show_all()
-
-            self.widget.set_property('scale-gravity', clutter.Gravity.CENTER)
-
-            def update_cb(t, s):
-                self.widget.set_property('opacity', min(255, int(round(255*s))))
-                #self.widget.set_property('scale-x', s)
-                #self.widget.set_property('scale-y', s)
-
-            timeline = Timeline(200, CURVE_SINE)
-            timeline.connect('update', update_cb)
-
-            timeline.run()
-
-            """
-            animation.set_key(self.widget, "scale-x", clutter.AnimationMode.EASE_OUT_BACK, 0.0, 0.0)
-            animation.set_key(self.widget, "scale-x", clutter.AnimationMode.EASE_OUT_BACK, 1.0, 1.0)
-
-            animation.set_key(self.widget, "scale-y", clutter.AnimationMode.EASE_OUT_BACK, 0.0, 0.0)
-            animation.set_key(self.widget, "scale-y", clutter.AnimationMode.EASE_OUT_BACK, 1.0, 1.0)
-
-            animation.start()
-            """
-
-            return False
-
-        gobject.timeout_add(1000, show)
-
-        rect = WidgetBackground(170, 170, 10)
-        rect.set_position(203, 222)
-        self.stage.add_actor(rect)
-        rect.show()
+        self.background = WidgetBackground(160, 160, 10)
+        self.background.set_position(-5, -5)
+        self.background.set_property('opacity', 255)
+        self.widget.add_actor(self.background)
+        self.background.show()
+        
+        self.wrapper = gtkclutter.Actor.new_with_contents(self.view)
+        self.widget.add_actor(self.wrapper)
+        self.wrapper.show_all()
+        
+        
+        
+        self.background.set_reactive(True)
+        self.background.connect('button-press-event', foo)
+        
+        self.wrapper.connect('allocation-changed', lambda actor, box, flags: self.background.set_size(box.get_width() + 10, box.get_height() + 10))
 
         self.window.show_all()
 

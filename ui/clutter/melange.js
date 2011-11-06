@@ -11,10 +11,6 @@ Element.Events.mouseenter = {
 
 };
 
-var API = new Class({
-    Implements: Events
-});
-
 var ConfigurationWrapper = new Class({
     Implements: Events,
 
@@ -45,24 +41,10 @@ var ConfigurationWrapper = new Class({
 
 var Widget = new Class({
     init: function() {
-        //_python.init();
-    },
-    api: new API(),
-    config: new ConfigurationWrapper()
+    }
 });
 
 var widget = new Widget();
-//_python.init_config();
-
-function py_to_js(data) {
-    console.log("PY-JS: " + data);
-}
-
-function js_to_py(data) {
-    hermes = document.getElementById('hermes');
-    hermes.innerHTML = data;
-    window.status = 'hermes-call';
-}
 
 window.addEvent('domready', function() {
     if(window.main !== undefined) {
