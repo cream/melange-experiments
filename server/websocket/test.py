@@ -9,7 +9,7 @@ import hashlib
 from select import select
 from threading import Thread
 
-from utils import decode, encode
+from utils import decode, encode, Opcode
 
 
 HANDSHAKE = '''HTTP/1.1 101 Switching Protocols\r
@@ -64,7 +64,7 @@ class WebSocket(object):
             if res['data']:
                 self.onmessage(res['data'])
 
-            if res['opcode'] == OP_CLOSE:
+            if res['opcode'] == Opcode.CLOSE:
                 self.close()
 
 
@@ -72,6 +72,11 @@ class WebSocket(object):
 
         print 'Got message: {0}'.format(msg)
 
+        try:
+           msg = encode(str(int(msg)+1), opcode=Opcode.TEXT)
+           self.client.send(msg)
+        except ValueError:
+            pass
 
     def do_handshake(self, request):
 
@@ -94,7 +99,7 @@ class WebSocket(object):
 
     def send_close(self):
 
-        buf = encode('', opcode=0x80)
+        buf = encode('', opcode=Opcode.CLOSE)
         self.client.send(buf)
 
 

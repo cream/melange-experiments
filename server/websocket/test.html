@@ -5,17 +5,19 @@
     <meta charset="UTF-8">
     <script type="text/javascript">
         var ws = new WebSocket("ws://127.0.0.1:8080");
+        ws.val = "1";
         ws.onopen = function() {
             alert('connected');
             ws.send("CONNECTED");
         };
         ws.onmessage = function (e) {
             alert(e.data);
+            ws.val = e.data
         };
         ws.onclose = function() { alert('Closed') };
 
         function test(){
-            ws.send('DDDDDDDAAAAAAAAAAAAAAATTTTTTTTTTAAAAAAAAAA');
+            ws.send(ws.val);
         }
 
         function close1(){
