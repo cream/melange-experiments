@@ -117,7 +117,9 @@ class Timeline(gobject.GObject):
 class Test(object):
 
     def __init__(self):
-
+    
+        self.display = gdk.Display.get_default()
+    
         self.window = gtk.Window()
         #self.window.set_type_hint(gdk.WindowTypeHint.DESKTOP)
         #self.window.set_size_request(1440, 900)
@@ -152,6 +154,8 @@ class Test(object):
         self.widget.set_reactive(True)
         self.widget.connect('enter-event', self.widget_enter_event_cb)
         self.widget.connect('leave-event', self.widget_leave_event_cb)
+        self.widget.connect('button-press-event', self.widget_button_press_event_cb)
+        self.widget.connect('button-release-event', self.widget_button_release_event_cb)
 
         self.widget.set_position(200, 200)
 
@@ -166,8 +170,40 @@ class Test(object):
         self.wrapper.show_all()
 
         self.wrapper.connect('allocation-changed', lambda actor, box, flags: self.background.set_size(box.get_width() + 10, box.get_height() + 10))
+        
+        self.clone = clutter.Clone()
+        self.clone.set_property('opacity', 0)
+        self.clone.set_source(self.wrapper)
+        self.widget.add_actor(self.clone)
+        
+        self.clone.set_reactive(True)
+        self.clone.connect('button-release-event', self.widget_button_release_event_cb)
 
         self.window.show_all()
+        self._moving = False
+        
+    
+    def move(self, x=0, y=0):
+
+        if self.moving:    
+            new_x, new_y = self.display.get_pointer()[1:3]
+            self.clone.set_position(new_x-x, new_y-y)
+
+            gobject.timeout_add(20, self.move, x, y)
+        return False
+
+
+    @property
+    def moving(self):
+        return self._moving
+
+    @moving.setter
+    def moving(self, value):
+        self._moving = value
+
+    @moving.deleter
+    def moving(self):
+        del self._moving
         
       
     def widget_enter_event_cb(self, actor, event):
@@ -175,7 +211,24 @@ class Test(object):
         
       
     def widget_leave_event_cb(self, actor, event):
-        self.background.animatev(clutter.AnimationMode.EASE_IN_QUAD, 300, ['opacity'], [0])
+        if not self.moving:
+            self.background.animatev(clutter.AnimationMode.EASE_IN_QUAD, 300, ['opacity'], [0])
+        
+        
+    def widget_button_press_event_cb(self, actor, event):
+
+        if not self.moving:
+            self.moving = True
+            self.clone.animatev(clutter.AnimationMode.EASE_IN_QUAD, 50, ['opacity'], [100])
+            gobject.timeout_add(20, self.move, self.display.get_pointer()[1], self.display.get_pointer()[2])
+        
+        
+    def widget_button_release_event_cb(self, actor, event):
+
+        if self.moving:
+            self.moving = False
+            self.clone.set_position(0, 0)
+            self.clone.animatev(clutter.AnimationMode.EASE_IN_QUAD, 50, ['opacity'], [0])
 
 
 Test()
